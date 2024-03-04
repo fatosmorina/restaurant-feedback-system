@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace RestaurantFeedbackSystem.Models;
 
 public class Restaurant

@@ -22,7 +22,7 @@ namespace RestaurantFeedbackSystem.Data
             };
             superUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword("strongpassword789");
             context.Users.Add(superUser);
-
+            
             var user1 = CreateUser("John Doe", "john.doe@example.com", "strongpassword123", Role.Customer, context);
             var user2 = CreateUser("Jane Smith", "jane.smith@example.com", "strongpassword456", Role.Customer, context);
 

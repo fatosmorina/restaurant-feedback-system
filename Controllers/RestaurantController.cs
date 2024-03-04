@@ -1,76 +1,51 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestaurantFeedbackSystem.Data;
 using RestaurantFeedbackSystem.Dto;
-using RestaurantFeedbackSystem.Models;
+using RestaurantFeedbackSystem.Services;
 
-namespace RestaurantFeedbackSystem.Controllers;
-
-[ApiController]
-[Route("api/restaurants")]
-public class RestaurantController : ControllerBase
+namespace RestaurantFeedbackSystem.Controllers
 {
-    private readonly RestaurantDbContext _context;
-    
-    public RestaurantController(RestaurantDbContext context)
+    [ApiController]
+    [Route("api/restaurants")]
+    public class RestaurantController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly IRestaurantService _restaurantService;
 
-    [HttpPost, Authorize(Roles = "Admin")]
-    public IActionResult? CreateRestaurant([FromBody] RestaurantDto restaurantDto)
-    {
-        string userId = HttpContext.User.FindFirst("userId")?.Value;
-        
-        if (userId == null)
-            return Unauthorized();
-        
-        var restaurant = new Restaurant(Guid.NewGuid().ToString(), userId, restaurantDto.Name, restaurantDto.Location);
-        _context.Restaurants.Add(restaurant);
-        _context.SaveChanges();
-        return Ok(restaurant);
-    }
-
-    [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,Customer")]
-    public IActionResult? GetRestaurant(string id)
-    {
-        var restaurant = _context.Restaurants
-            .Include(r => r.FeedbackList)
-            .FirstOrDefault(r => r.Id == id);
-
-        if (restaurant == null)
-            return NotFound();
-
-        var overallRating = restaurant.FeedbackList.Count > 0 ? restaurant.FeedbackList.Average(f => f.Rating) : 0;
-
-        var result = new
+        public RestaurantController(IRestaurantService restaurantService)
         {
-            Id = restaurant.Id,
-            Name = restaurant.Name,
-            Location = restaurant.Location,
-            OverallRating = overallRating
-        };
+            _restaurantService = restaurantService;
+        }
 
-        return Ok(result);
-    }
+        [HttpPost, Authorize(Roles = "Admin")]
+        public IActionResult? CreateRestaurant([FromBody] RestaurantDto restaurantDto)
+        {
+            string userId = HttpContext.User.FindFirst("userId")?.Value;
 
-    [HttpGet]
-    [Authorize(Roles = "Admin,Customer")]
-    public IActionResult? GetRestaurants()
-    {
-        var restaurants = _context.Restaurants
-            .Include(r => r.FeedbackList)
-            .Select(r => new
-            {
-                Id = r.Id,
-                Name = r.Name,
-                Location = r.Location,
-                OverallRating = r.FeedbackList.Count > 0 ? r.FeedbackList.Average(f => f.Rating) : 0
-            })
-            .ToList();
+            if (userId == null)
+                return Unauthorized();
 
-        return Ok(restaurants);
+            var result = _restaurantService.CreateRestaurant(restaurantDto, userId);
+
+            return result;
+        }
+
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Customer")]
+        public IActionResult? GetRestaurant(string id)
+        {
+            var result = _restaurantService.GetRestaurant(id);
+
+            return result;
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Customer")]
+        public IActionResult? GetRestaurants()
+        {
+            var result = _restaurantService.GetRestaurants();
+
+            return result;
+        }
     }
 }

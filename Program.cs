@@ -14,6 +14,9 @@ builder.Services.AddDbContext<RestaurantDbContext>(options => options.UseInMemor
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddEndpointsApiExplorer();
